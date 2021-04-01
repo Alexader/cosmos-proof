@@ -10,7 +10,6 @@ import (
 
 // request of chaincode
 type ProofInfo struct {
-	proof      []byte              `json:"proof"`
 	validators *types.ValidatorSet `json:"validators"`
 	chainID    string              `json:"chain_id"`
 	iccp       *relaychain.ICCP    `json:"iccp"`
