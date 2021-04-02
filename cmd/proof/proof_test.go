@@ -1,22 +1,48 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/types"
-	"io/ioutil"
-	"testing"
 	"xa.org/xablockchain/xchain-meta/relaychain"
 )
 
 func TestProof(t *testing.T) {
-	iccpBytes, err := ioutil.ReadFile("./testdata/cosmos-iccp")
+	// test gin context
+	iccpBytes, err := ioutil.ReadFile("./testdata/cosmos-Iccp")
 	require.Nil(t, err)
 	validatorBytes, err := ioutil.ReadFile("./testdata/validator_set.txt")
 	require.Nil(t, err)
+
 	validators := &types.ValidatorSet{}
-	require.Nil(t, json.Unmarshal(validatorBytes, validators))
+	cdc := relaychain.ModuleCdc
+	require.Nil(t, cdc.UnmarshalJSON(validatorBytes, validators))
+
 	iccp := &relaychain.ICCP{}
 	require.Nil(t, json.Unmarshal(iccpBytes, iccp))
-	require.Nil(t, verifyICCP(validators, "appchain1", iccp))
+
+	proofInfo := &ProofInfo{
+		Validators: validatorBytes,
+		ChainID:    "appchain1",
+		Iccp:       iccp,
+	}
+	proofInfoBytes, err := json.Marshal(proofInfo)
+	require.Nil(t, err)
+
+	buf := bytes.NewBuffer(proofInfoBytes)
+	gin.SetMode(gin.TestMode)
+	g, _ := gin.CreateTestContext(httptest.NewRecorder())
+
+	r, err := http.NewRequest("POST", "http://localhost/verify", buf)
+	require.Nil(t, err)
+	g.Request = r
+	verify(g)
+	require.Equal(t, g.Writer.Status(), 200)
 }

@@ -4,15 +4,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tendermint/tendermint/types"
 	"xa.org/xablockchain/xchain-meta/relaychain"
 )
 
 // request of chaincode
 type ProofInfo struct {
-	validators *types.ValidatorSet `json:"validators"`
-	chainID    string              `json:"chain_id"`
-	iccp       *relaychain.ICCP    `json:"iccp"`
+	Validators []byte           `json:"validators"`
+	ChainID    string           `json:"chain_id"`
+	Iccp       *relaychain.ICCP `json:"iccp"`
 }
 
 // response to send back to broker chaincode
@@ -29,7 +28,7 @@ func wrongRequest(g *gin.Context, err error) {
 }
 
 func verifyOK(g *gin.Context) {
-	g.JSON(http.StatusBadRequest, &Response{
+	g.JSON(http.StatusOK, &Response{
 		Status: true,
 	})
 }

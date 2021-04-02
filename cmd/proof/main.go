@@ -35,7 +35,14 @@ func verify(g *gin.Context) {
 		return
 	}
 
-	if err := verifyICCP(proofInfo.validators, proofInfo.chainID, proofInfo.iccp); err != nil {
+	validators := &types.ValidatorSet{}
+	cdc := relaychain.ModuleCdc
+	if err := cdc.UnmarshalJSON(proofInfo.Validators, validators); err != nil {
+		wrongRequest(g, err)
+		return
+	}
+
+	if err := verifyICCP(validators, proofInfo.ChainID, proofInfo.Iccp); err != nil {
 		wrongRequest(g, err)
 		return
 	}
@@ -49,7 +56,7 @@ func verifyICCP(validatorSet *types.ValidatorSet, chainID string, iccp *relaycha
 	}
 
 	if iccp.Height+1 > cp.NextSignedHeader.Height {
-		return fmt.Errorf("iccp height is not match with signed header height, iccp height: %d, next signed header height: %d",
+		return fmt.Errorf("Iccp height is not match with signed header height, Iccp height: %d, next signed header height: %d",
 			iccp.Height, cp.NextSignedHeader.Height)
 	}
 
@@ -67,7 +74,7 @@ func verifyICCP(validatorSet *types.ValidatorSet, chainID string, iccp *relaycha
 
 	iccpBytes, err := iccp.MarshalJSONWithoutProof()
 	if err != nil {
-		return fmt.Errorf("msrshal iccp without proof: %w", err)
+		return fmt.Errorf("msrshal Iccp without proof: %w", err)
 	}
 
 	err = prt.VerifyValue(cp.Proof, cp.NextSignedHeader.AppHash, kp.String(), iccpBytes)
